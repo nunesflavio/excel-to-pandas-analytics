@@ -43,10 +43,6 @@ ENV/
 */.ipynb_checkpoints/*
 *.ipynb_checkpoints/
 
-# --- Dados do Projeto (Recomendado para Análise de Dados) ---
-# Planilhas contem dados fictícios e tamanho pequeno.
-data/
-
 # --- Sistema Operacional ---
 .DS_Store
 .DS_Store?
