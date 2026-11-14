@@ -8,8 +8,9 @@ Projeto prático de estudos focado na exploração, tratamento e análise de dad
 
 - **Leitura & Validação:** Carregamento de planilhas Excel estruturadas com múltiplas abas via `pandas` e `openpyxl`.
 - **Limpeza & Sanitização:** Conversão de formatos de datas (`datetime64`), tratamento de nulos e recálculo seguro de métricas.
-- **Engenharia de Features:** Aplicação de regras de negócio customizadas via funções e `.apply()` (ex.: classificação do status de estoque).
-- **Agregações & Resumos:** Uso de `groupby` e `.agg()` para consolidações mensais e análises temporais.
+- **Engenharia de Features & Pipeline Modular:** Criação de pipeline reutilizável em `src/` para aplicação de regras de negócio (cálculo de faturamento, classificação de status de estoque e ordenação temporal de meses).
+- **Agregações & Resumos Temporais:** Uso de `groupby` e `.agg()` para consolidações mensais, respeitando a ordem cronológica real dos meses (evitando a ordenação alfabética padrão).
+- **Visualização de Dados:** Gráficos de barras (`seaborn` / `matplotlib`) e formatação monetária de tabelas de resumo.
 - **Raciocínio Analítico & Métricas:** Cálculo aprofundado de indicadores de negócio como **Ticket Médio**, diferenciando cálculos ingênuos de agregações por transação única (`nunique` e `groupby`).
 
 ---
@@ -20,45 +21,41 @@ Projeto prático de estudos focado na exploração, tratamento e análise de dad
 excel-to-pandas-analytics/
 ├── data/
 │   ├── raw/
-│   │   └── loja_informatica_2026.xlsx   # Dados brutos (abas: 'Dados Detalhados' e 'Resumo Mensal')
+│   │   └── loja_informatica_2026.xlsx       # Dados brutos (abas: 'Dados Detalhados' e 'Resumo Mensal')
 │   └── processed/
-│       └── loja_informatica_tratada.xlsx# Dados limpos e enriquecidos exportados via script
+│       └── loja_informatica_tratada.xlsx    # Dados limpos e enriquecidos exportados via script
 ├── notebooks/
-│   ├── 01_analise.ipynb                # Exploração inicial (head, info, describe)
-│   ├── 02_analise.ipynb                # Limpeza, tipagem de datas, regras de estoque e exportação
-│   ├── 03_analise.ipynb                # Agregações por período (faturamento e volume por mês)
-│   └── 04_analise.ipynb                # Métricas de negócio: Ticket Médio e validação por pedido
+│   ├── 03_analise.ipynb                    # Agregações temporais cronológicas, tabelas e gráficos
+│   └── 04_analise.ipynb                    # Métricas de negócio: Ticket Médio e validação por pedido
 ├── src/
-│   └── excel-to-pandas-analytics/      # Módulos Python reutilizáveis do pacote
-├── pyproject.toml                      # Gerenciamento de dependências via Poetry
-└── README.md                           # Documentação do projeto
+│   └── excel_to_pandas_analytics/          # Pacote Python com utilitários reutilizáveis
+│       ├── __init__.py                     # Exportação das funções públicas do pipeline
+│       ├── file_base_data.py               # Leitura segura com resolução dinâmica de caminhos
+│       ├── tratamento.py                   # Pipeline central de transformação e enriquecimento
+│       ├── recalculate_excel.py            # Recálculo de fórmulas de vendas
+│       ├── status_estoque.py               # Regras de negócio de estoque (Crítico/Baixo/Normal)
+│       └── convertion_to_data_pandas.py    # Conversão de tipagem de datas
+├── pyproject.toml                          # Gerenciamento de dependências via Poetry
+└── README.md                               # Documentação do projeto
 ```
 
 ---
 
-## 🔬 OBSERVAÇÂO
+## 🔬 Observação
 
-As planilhas estão no repositório porque os dados são fictícios, somente para estudo.
+As planilhas estão versionadas no repositório apenas porque contêm dados fictícios, criados exclusivamente para fins de estudo e prática.
 
 ---
 
 ## 🔬 Trilha dos Notebooks
 
-1. **`01_analise.ipynb` - Exploração Inicial:**
-   - Carga da aba `Dados Detalhados`.
-   - Inspeção de tipos (`df.info()`), valores nulos e distribuição estatística inicial (`df.describe()`).
+1. **`03_analise.ipynb` - Agregações Temporais & Visualização:**
+   - Integração direta com o pacote `excel_to_pandas_analytics` (`carregar_dados_loja` e `tratar_dados`).
+   - **Ordenação Cronológica dos Meses:** Uso de `pd.Categorical` para garantir que o `groupby('Mês')` siga o calendário real (`Janeiro -> Fevereiro -> ... -> Dezembro`), eliminando o problema clássico de ordenação alfabética (`Abril -> Agosto...`).
+   - Apresentação de tabela resumida estilizada com formatação monetária (`R$`).
+   - Gráfico de barras com `seaborn` ilustrando a curva do faturamento ao longo do ano.
 
-2. **`02_analise.ipynb` - Tratamento e Pipeline:**
-   - Conversão explícita de formato de data brasileiro (`%d/%m/%Y`).
-   - Recálculo programático de `Faturamento Total (R$)` = `Preço Unitário` $\times$ `Qtd Vendida`.
-   - Criação da coluna categórica `Status Estoque` (*Crítico* < 10, *Baixo* < 25, *Normal* $\ge$ 25).
-   - Exportação para a camada de dados tratados em `data/processed/`.
-
-3. **`03_analise.ipynb` - Agregações Temporais:**
-   - Agrupamento mensal (`groupby('Mês')`).
-   - Totalização de receita, volume de itens e contagem de transações.
-
-4. **`04_analise.ipynb` - Métricas Analíticas & Boas Práticas:**
+2. **`04_analise.ipynb` - Métricas Analíticas & Boas Práticas:**
    - Cálculo do **Ticket Médio por Transação**.
    - Comparativo metodológico: `.sum() / len()` vs `.mean()` vs agrupamento por pedido real (`.nunique()` e `.groupby()`).
    - Simulação analítica com carrinhos com múltiplos itens, demonstrando a prevenção de distorções estatísticas.
@@ -70,7 +67,7 @@ As planilhas estão no repositório porque os dados são fictícios, somente par
 - **Linguagem:** Python 3.14+
 - **Gerenciador de Ambientes:** [Poetry](https://python-poetry.org/)
 - **Manipulação de Dados:** `pandas`, `numpy`, `openpyxl`
-- **Visualização (Ambiente pronto):** `matplotlib`, `seaborn`
+- **Visualização:** `matplotlib`, `seaborn`
 - **Ambiente Interativo:** `jupyter`, `notebook`
 
 ---
@@ -79,7 +76,7 @@ As planilhas estão no repositório porque os dados são fictícios, somente par
 
 1. **Clone ou acesse o repositório:**
    ```bash
-   cd /caminho/excel-to-pandas-analytics
+   cd /home/legion/var/AD/excelinf
    ```
 
 2. **Instale as dependências via Poetry:**
@@ -87,9 +84,17 @@ As planilhas estão no repositório porque os dados são fictícios, somente par
    poetry install
    ```
 
-3. **Inicie o servidor do Jupyter Notebook:**
-   ```bash
-   poetry run jupyter notebook
-   ```
+3. **Opções para executar as análises:**
 
-4. Acesse a pasta `notebooks/` e execute as análises sequencialmente (de `01` a `04`).
+   * **Pelo PyCharm / IDE:**
+     Abra qualquer notebook (`03_analise.ipynb` ou `04_analise.ipynb`) e execute célula a célula selecionando o kernel Poetry.
+
+   * **Pelo navegador local (Jupyter Notebook / JupyterLab):**
+     ```bash
+     poetry run jupyter notebook
+     ```
+
+   * **Execução em lote via linha de comando (Headless):**
+     ```bash
+     poetry run jupyter nbconvert --to notebook --execute notebooks/03_analise.ipynb --output notebooks/03_analise.ipynb
+     ```
